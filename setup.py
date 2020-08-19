@@ -2,7 +2,7 @@ from distutils.core import setup
 setup(
   name = 'LammpsFileManipulation',
   packages = ['LammpsFileManipulation'],
-  version = '0.1',
+  version = '0.11',
   license='MIT',
   description = 'This is a package designed to help streamline the process of preprocessing LAMMPS output files for scientific calculations/manipulations in Python. The class structures are built using pandas DataFrames making it easy to manipulate.',
   author = 'Aaron Schwan',
