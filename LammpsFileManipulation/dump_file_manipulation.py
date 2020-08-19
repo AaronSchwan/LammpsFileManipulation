@@ -557,10 +557,14 @@ def write_dump_to_data_format(dump_class:dumpFile,file_path:str):
 
     atomic_data = dump_class.atoms[["id","type", "x", "y", "z"]].to_csv(file_path,mode = "a", index = False,header = Flase ,sep = ' ')
 
-def group_translate(dump_files, quadrent):
+def group_translate(dump_files, translation_operation):
     """
     This takes in a group of dumps in the dictionary format of class and ####translates
     them as a group the same amount###
+
+    because of the nature of this operation the values must be found first therefore
+    when not using a custom transform the function loops through adding a small
+    amount of time to this practice
 
     proper call:
     translated = group_translate(dump_files,quadrent)
@@ -592,106 +596,132 @@ def group_translate(dump_files, quadrent):
     y = dumpFile.y_axis_cart
     z = dumpFile.z_axis_cart
 
-    for ind,dump_class_id in enumerate(dump_files):
-        dump_class = dump_files[dump_class_id]
-        atomic_data = dump_class.atoms
-        #get comparision values
-        x_low_t = min(atomic_data[x])
-        y_low_t = min(atomic_data[y])
-        z_low_t = min(atomic_data[z])
-        x_max_t = max(atomic_data[x])
-        y_max_t = max(atomic_data[y])
-        z_max_t = max(atomic_data[z])
+    if type(translation_operation) == list:
+        if all(isinstance(i, (float, int)) for i in translation_operation) and len(translation_operation) == 3:
+            tran_x = translation_operation[0]
+            tran_y = translation_operation[1]
+            tran_z = translation_operation[2]
 
-        if ind == 0:
-            #establishes starting point
-            x_low = x_low_t
-            y_low = y_low_t
-            z_low = z_low_t
-            x_max = x_max_t
-            y_max = y_max_t
-            z_max = z_max_t
-
-        #updating values if needed
-        if x_low_t < x_low:
-            x_low = x_low_t
-        if y_low_t < y_low:
-            y_low = y_low_t
-        if z_low_t < z_low:
-            z_low = z_low_t
-        if x_max_t < x_max:
-            x_max = x_max_t
-        if y_max_t < y_max:
-            y_max = y_max_t
-        if z_max_t < z_max:
-            z_max = z_max_t
-    #getting correction direction for minimums
-    if x_low > 0:
-        dir_x = -1
+        else:
+             raise Exception("Not a valid input to translation function custom list")
     else:
-        dir_x = 1
 
-    if y_low > 0:
-        dir_y = -1
-    else:
-        dir_y = 1
+        for ind,dump_class_id in enumerate(dump_files):
+            dump_class = dump_files[dump_class_id]
+            atomic_data = dump_class.atoms
+            #get comparision values
+            x_low_t = min(atomic_data[x])
+            y_low_t = min(atomic_data[y])
+            z_low_t = min(atomic_data[z])
+            x_max_t = max(atomic_data[x])
+            y_max_t = max(atomic_data[y])
+            z_max_t = max(atomic_data[z])
+            x_sh_max_t = max(atomic_data[x])-min(atomic_data[x])
+            y_sh_max_t = max(atomic_data[y])-min(atomic_data[y])
+            z_sh_max_t = max(atomic_data[z])-min(atomic_data[z])
 
-    if z_low > 0:
-        dir_z = -1
-    else:
-        dir_z = 1
+            if ind == 0:
+                #establishes starting point
+                x_low = x_low_t
+                y_low = y_low_t
+                z_low = z_low_t
+                x_max = x_max_t
+                y_max = y_max_t
+                z_max = z_max_t
+                x_sh_max = x_sh_max_t
+                y_sh_max = y_sh_max_t
+                z_sh_max = z_sh_max_t
 
-    #translating
 
-    if quadrent == 0:
-        tran_x = -(x_max-x_low)/2 + dir_x*x_low
-        tran_y = -(y_max-y_low)/2 + dir_y*y_low
-        tran_z = -(z_max-z_low)/2 + dir_z*z_low
+            #updating values if needed
+            if x_low_t < x_low:
+                x_low = x_low_t
+            if y_low_t < y_low:
+                y_low = y_low_t
+            if z_low_t < z_low:
+                z_low = z_low_t
+            if x_max_t > x_max:
+                x_max = x_max_t
+            if y_max_t > y_max:
+                y_max = y_max_t
+            if z_max_t > z_max:
+                z_max = z_max_t
+            if x_sh_max_t > x_sh_max:
+                x_sh_max = x_sh_max_t
+            if y_sh_max_t > y_sh_max:
+                y_sh_max = y_sh_max_t
+            if z_sh_max_t > z_sh_max:
+                z_sh_max = z_sh_max_t
 
-    elif quadrent == 1:
-        tran_x = -x_low
-        tran_y = -y_low
-        tran_z = -z_low
+        #getting correction direction for minimums
+        if x_low > 0:
+            dir_x = -1
+        else:
+            dir_x = 1
 
-    elif quadrent == 2:
-        tran_x = -x_low
-        tran_y = -y_low
-        tran_z = -z_max+dir_z*(z_max+dir_z*z_low)
+        if y_low > 0:
+            dir_y = -1
+        else:
+            dir_y = 1
 
-    elif quadrent == 3:
-        tran_x = -x_low
-        tran_y = -y_max+dir_y*(y_max+dir_y*y_low)
-        tran_z = -z_low
+        if z_low > 0:
+            dir_z = -1
+        else:
+            dir_z = 1
 
-    elif quadrent == 4:
-        tran_x = -x_low
-        tran_y = -y_max+dir_y*(y_max+dir_y*y_low)
-        tran_z = -z_max+dir_z*(z_max+dir_z*z_low)
+        #translating
 
-    elif quadrent == 5:
-        tran_x = -x_max+dir_x*(x_max+dir_x*x_low)
-        tran_y = -y_low
-        tran_z = -z_low
+        if translation_operation == 0:
+            tran_x = -(x_max-x_low)/2 + dir_x*x_low
+            tran_y = -(y_max-y_low)/2 + dir_y*y_low
+            tran_z = -(z_max-z_low)/2 + dir_z*z_low
 
-    elif quadrent == 6:
-        tran_x = -x_max+dir_x*(x_max+dir_x*x_low)
-        tran_y = -y_low
-        tran_z = -z_max+dir_z*(z_max+dir_z*z_low)
+        elif translation_operation == 1:
+            tran_x = -x_low
+            tran_y = -y_low
+            tran_z = -z_low
 
-    elif quadrent == 7:
-        tran_x = -x_max+dir_x*(x_max+dir_x*x_low)
-        tran_y = -y_max+dir_y*(y_max+dir_y*y_low)
-        tran_z = -z_low
+        elif translation_operation == 2:
+            tran_x = -x_low
+            tran_y = -y_low
+            tran_z = -z_low-z_sh_max
 
-    elif quadrent == 8:
-        tran_x = -x_max+dir_x*(x_max+dir_x*x_low)
-        tran_y = -y_max+dir_y*(y_max+dir_y*y_low)
-        tran_z = -z_max+dir_z*(z_max+dir_z*z_low)
+        elif translation_operation == 3:
+            tran_x = -x_low
+            tran_y = -y_low-y_sh_max
+            tran_z = -z_low
 
-    else:
-        raise Exception("Not a valid quadrent call")
+        elif translation_operation == 4:
+            tran_x = -x_low
+            tran_y = -y_low-y_sh_max
+            tran_z = -z_low-z_sh_max
 
-    #transforms
+        elif translation_operation == 5:
+            tran_x =  -x_low-x_sh_max
+            tran_y = -y_low
+            tran_z = -z_low
+
+        elif translation_operation == 6:
+            tran_x =  -x_low-x_sh_max
+            tran_y = -y_low
+            tran_z = -z_low-z_sh_max
+
+        elif translation_operation == 7:
+            tran_x =  -x_low-x_sh_max
+            tran_y = -y_low-y_sh_max
+            tran_z = -z_low
+
+        elif translation_operation == 8:
+            tran_x = -x_low-x_sh_max
+            tran_y = -y_low-y_sh_max
+            tran_z = -z_low-z_sh_max
+
+
+
+        else:
+             raise Exception("Not a valid input to translation function")
+
+    #transforming classes
     translated_dump_files = {}
     for dump_class_id in dump_files:
         translated_dump_files[dump_class_id] = dump_files[dump_class_id].translate([tran_x,tran_y,tran_z])
