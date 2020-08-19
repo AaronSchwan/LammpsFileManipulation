@@ -6,6 +6,7 @@ This is a set of useful features for manipulating basic lammps output files
 author: Aaron Schwan
 email: schwanaaron@gmail.com
 github: https://github.com/AaronSchwan
+website: https://aaronschwan.wordpress.com/lammps-file-manipulation-package/
 ###############################################################################
 ###############################################################################
 
@@ -15,12 +16,8 @@ github: https://github.com/AaronSchwan
 #default imports
 import sys
 import os
-import gc
-import ntpath
-import pickle
 import time
 import warnings
-import concurrent.futures
 import types
 import copy
 
@@ -53,6 +50,14 @@ class dumpFile:
         obj.xy_area = returns square shaped area of xy plane
         obj.xz_area = returns square shaped area of xz plane
         obj.yz_area = returns square shaped area of yz plane
+        obj.xlo = low x value in obj.atoms
+        obj.ylo = low y value in obj.atoms
+        obj.zlo = low z value in obj.atoms
+        obj.xhi = high x value in obj.atoms
+        obj.yhi = high y value in obj.atoms
+        obj.zhi = high z value in obj.atoms
+
+
 
     method calls:
         obj.translate() = method to translate atom locations of the instance this
@@ -73,6 +78,7 @@ class dumpFile:
 
     ##atomic identification
     id = "id"
+    type = "type"
     ##cartesian
     x_axis_cart = "x"
     y_axis_cart = "y"
@@ -87,15 +93,57 @@ class dumpFile:
     #property defined functions#################################################
     @property
     def numberofatoms(self):
+        #get axis
+        id = self.id
         #finds the number of atoms for the given data
-        return len(self.atoms["id"])
+        return len(self.atoms[id])
 
     @property
     def boxbounds(self):
+        #get axes
+        x = self.x_axis_cart
+        y = self.y_axis_cart
+        z = self.z_axis_cart
 
         #getting bounds and making custom format to values
-        box_dict = {"labels":["type","low","high"],"x":[self.boundingtypes[0],min(self.atoms["x"]),max(self.atoms["x"])],"y":[self.boundingtypes[1],min(self.atoms["y"]),max(self.atoms["y"])],"z":[self.boundingtypes[2],min(self.atoms["z"]),max(self.atoms["z"])]}
+        box_dict = {"labels":["type","low","high"],"x":[self.boundingtypes[0],min(self.atoms[x]),max(self.atoms[x])],"y":[self.boundingtypes[1],min(self.atoms[y]),max(self.atoms[y])],"z":[self.boundingtypes[2],min(self.atoms[z]),max(self.atoms[z])]}
         return pd.DataFrame.from_dict(box_dict).set_index("labels")
+
+    @property
+    def xlo(self):
+        #get axis
+        x = self.x_axis_cart
+        return min(self.atoms[x])
+
+    @property
+    def xhi(self):
+        #get axis
+        x = self.x_axis_cart
+        return max(self.atoms[x])
+
+    @property
+    def ylo(self):
+        #get axis
+        y = self.y_axis_cart
+        return min(self.atoms[y])
+
+    @property
+    def yhi(self):
+        #get axis
+        y = self.y_axis_cart
+        return max(self.atoms[y])
+
+    @property
+    def zlo(self):
+        #get axis
+        z = self.z_axis_cart
+        return min(self.atoms[z])
+
+    @property
+    def zhi(self):
+        #get axis
+        z = self.z_axis_cart
+        return max(self.atoms[z])
 
     @property
     def volume(self):
@@ -137,6 +185,7 @@ class dumpFile:
         y_range = abs(self.boxbounds.loc["high","y"] - self.boxbounds.loc["low","y"])
 
         return z_range*y_range
+
 
 
     #Alternative CLass Constructive Methods#####################################
@@ -225,20 +274,19 @@ class dumpFile:
 
         checks in order: number of atoms -> atomic positions
         """
-        if dumpFile.active_coordinate_system == "cartesian":
 
-            if self.numberofatoms == other.numberofatoms:
-                #subtraction method because pd.equals will return false unless more operations are done
-                df_self = self.translate(1).atoms[[self.id,self.x_axis_cart,self.y_axis_cart,self.z_axis_cart]]
-                df_other = other.translate(1).atoms[[self.id,self.x_axis_cart,self.y_axis_cart,self.z_axis_cart]]
-                df = (df_self-df_other).round(dumpFile.checking_tolerance)
-                if df[self.id].eq(0).all() and df[self.x_axis_cart].eq(0).all()and df[self.y_axis_cart].eq(0).all() and df[self.z_axis_cart].eq(0).all():
-                    return True
-                else:
-                    return False
-
+        if self.numberofatoms == other.numberofatoms:
+            #subtraction method because pd.equals will return false unless more operations are done
+            df_self = self.translate(1).atoms[[self.id,self.x_axis_cart,self.y_axis_cart,self.z_axis_cart]]
+            df_other = other.translate(1).atoms[[self.id,self.x_axis_cart,self.y_axis_cart,self.z_axis_cart]]
+            df = (df_self-df_other).round(dumpFile.checking_tolerance)
+            if df[self.id].eq(0).all() and df[self.x_axis_cart].eq(0).all()and df[self.y_axis_cart].eq(0).all() and df[self.z_axis_cart].eq(0).all():
+                return True
             else:
                 return False
+
+        else:
+            return False
 
 
     def __add__(self,other):
@@ -410,152 +458,101 @@ class dumpFile:
         else:
              raise Exception("Not a valid input to translation function")
 
+    #writing out functions
+    def write_dump_file(self,file_path:str,mode:str = "a"):
+        """
+        This takes in a file path and writes a dumpFile class to the file path in
+        standard lammps format
+
+        write_lammps_dump(file_path:str,dump_class:dumpFile,mode:str = "a")
+
+        file_path = path to file [str]
+        mode = overwrite("w") or append("a") **default append [str]
+
+        """
+
+        if mode == "a" or mode == "w":
+            precision = dumpFile.class_tolerance#get writing precision
+            #defining new object
+            dump_class_object = copy.deepcopy(self)
+
+            with open(file_path,mode) as file:
+                file.write("ITEM: TIMESTEP \n")
+                file.write(str(dump_class_object.timestep))
+                file.write("\n")
+                file.write("ITEM: NUMBER OF ATOMS \n")
+                file.write(str(dump_class_object.numberofatoms))
+                file.write("\n")
+                file.write("ITEM: BOX BOUNDS ")
+                file.write(str(dump_class_object.boundingtypes[0])+" "+str(dump_class_object.boundingtypes[1])+" "+str(dump_class_object.boundingtypes[2])+"\n")#bound types
+                file.write(str(round(dump_class_object.xlo,precision))+" "+str(round(dump_class_object.xhi,precision))+"\n")
+                file.write(str(round(dump_class_object.ylo,precision))+" "+str(round(dump_class_object.yhi,precision))+"\n")
+                file.write(str(round(dump_class_object.zlo,precision))+" "+str(round(dump_class_object.zhi,precision))+"\n")
+                file.write("ITEM: ATOMS ")
 
 
-def multiple_timestep_singular_file_dumps(file_path:str,ids:list = ["TimestepDefault"]):
-    """
-    this opens a multi-timestep lammps dump and converts it to a dictionary of
-    dumpFile classes with the keys set to the timesteps
-
-    ids:list = ["TimestepDefault"]
-    ids are set to the dumpclass timestep by default however if there are duplicates
-    this will override the timesteps so you can define the ids for the dictionary
-    """
-    dump_files = {} #dictionary of class
-
-    raw_data = pd.read_csv(file_path,header = None)#getting data
-    indexes = raw_data.index[raw_data[0] == "ITEM: TIMESTEP"].tolist()#getting splitting indexes
-
-    if len(ids) == len(indexes) or ids == ["TimestepDefault"]:
-
-        #splitting and iterating through pandas dataFrame
-        for ind, index in enumerate(indexes):
-
-            if ind < len(indexes)-1:
-                #all except last index
-                df = raw_data.loc[index:indexes[ind+1]-1,:]#making new dataFrame
-                dump_class = dumpFile.pandas_to_dumpfile(df)#dump class processing
-
-            else:
-                #last index
-                df = raw_data.loc[index:len(raw_data)+1,:]#making new dataFrame
-                dump_class = dumpFile.pandas_to_dumpfile(df)#dump class processing
-
-            #adding to dictionary
-            if ids == ["TimestepDefault"]:
-                #using timestep to insert
-                dump_files[int(dump_class.timestep)] = dump_class
-            else:
-                #using custom id
-                dump_files[ids[ind]] = dump_class
-
-        return dump_files
+            dump_class_object.atoms.round(precision).to_csv(file_path,mode = "a", index = False,sep = ' ')
+            del dump_class_object
 
 
-    else:
-         warnings.warn("Length of ids list is not equal to files list length")
+        else:
+            raise Exception('Mode entered for writing is not recognized ["a"= append to files, "w"= overwrite file]')
 
 
-def batch_import_files(file_paths:list,ids:list = ["TimestepDefault"]):
-    """
-    this opens several lammps dumps and converts it to a dictionary of
-    dumpFile classes with the keys set to the timesteps
+    def write_dump_to_data_format(self, file_path:str,mode:str = "a"):
+        """
+        writes dumpFile class to a data file format
 
-    ids:list = ["TimestepDefault"]
-    ids are set to the dumpclass timestep by default however if there are duplicates
-    this will override the timesteps so you can define the ids for the dictionary
-    """
-    if len(ids) == len(file_paths) or ids == ["TimestepDefault"]:
+        mode = overwrite("w") or append("a") **default append [str]
 
-        dump_files = {} #dictionary of class
+        **this will only save the positions in data fromatting
+        **primary use to write a initiallization data file for a lammps
 
-        for ind,file_path in enumerate(file_paths):
-            #importing class
-            dump_class = dumpFile.lammps_dump(file_path)
+        ** example
 
-            #adding to dictionary
-            if ids == ["TimestepDefault"]:
-                #using timestep to insert
-                dump_files[int(dump_class.timestep)] = dump_class
-            else:
-                #using custom id
-                dump_files[ids[ind]] = dump_class
+        # LAMMPS data file written by LammpsFileManipulation.py
+        275184 atoms
+        2 atom types
+        0.4892064609 119.789657019 xlo xhi
+        -158.7268972078 158.7268972078 ylo yhi
+        0.4917072972 119.7871561826 zlo zhi
 
-        return dump_files
+        Atoms  # atomic
 
+        1 2 2.59911 -158.671 2.89486
+        .
+        .
+        .
 
-    else:
-         warnings.warn("Length of ids list is not equal to files list length")
+        """
+        if mode == "a" or mode == "w":
+            precision = dumpFile.class_tolerance#get writing precision
+            #defining new object
+            dump_class_object = copy.deepcopy(self)
 
+            id = dump_class_object.id
+            type = dump_class_object.type
+            x = dump_class_object.x_axis_cart
+            y = dump_class_object.y_axis_cart
+            z = dump_class_object.z_axis_cart
 
-def write_lammps_dump(file_path:str,dump_class:dumpFile,mode:str = "a"):
-    """
-    This takes in a file path and writes a dumpFile class to the file path in
-    standard lammps format
+            with open(file_path,"w") as file:
+                file.write("# LAMMPS data file written by LammpsFileManipulation.py \n")
+                file.write(str(dump_class.numberofatoms))
+                file.write(" atoms \n")
+                file.write(str(max(dump_class.atoms["type"])))
+                file.write(" atom types \n")
+                file.write(str(round(dump_class_object.xlo,precision))+" "+str(round(dump_class_object.xhi,precision))+" xlo xhi\n")
+                file.write(str(round(dump_class_object.ylo,precision))+" "+str(round(dump_class_object.yhi,precision))+" ylo yhi\n")
+                file.write(str(round(dump_class_object.zlo,precision))+" "+str(round(dump_class_object.zhi,precision))+" zlo zhi\n")
+                file.write("\n\n")
+                file.write("Atoms  # atomic\n\n")
 
-    write_lammps_dump(file_path:str,dump_class:dumpFile,mode:str = "a")
+            dump_class.atoms[[id,type, x, y, z]].round(precision).to_csv(file_path,mode = "a", index = False,header = False ,sep = ' ')
+            del dump_class_object
 
-    file_path = path to file [str]
-    dump_class = dumpFile class to be written [dumpFile]
-    mode = overwrite("w") or append("a") **default append [str]
-
-    """
-
-    with open(file_path,mode) as file:
-        file.write("ITEM: TIMESTEP \n")
-        file.write(str(dump_class.timestep))
-        file.write("\n")
-        file.write("ITEM: NUMBER OF ATOMS \n")
-        file.write(str(dump_class.numberofatoms))
-        file.write("\n")
-        file.write("ITEM: BOX BOUNDS ")
-        file.write(str(dump_class.boxbounds.iloc[0,0]+" "+dump_class.boxbounds.iloc[0,1]+" "+dump_class.boxbounds.iloc[0,2]))
-        bounds = pd.DataFrame(dump_class.boxbounds.loc["low"])
-        bounds = bounds.join( pd.DataFrame(dump_class.boxbounds.loc["high"]))
-        file.write(str(bounds.iloc[0:4,0:3]).replace("x  ","").replace("y  ","").replace("z  ","").replace("low ","").replace("high",""))
-        file.write("\n")
-        file.write("ITEM: ATOMS ")
-
-    dump_class.atoms.to_csv(file_path,mode = "a", index = False,sep = ' ')
-
-def write_dump_to_data_format(dump_class:dumpFile,file_path:str):
-    """
-    writes dumpFile class to a data file format
-
-    **this will only save the positions in data fromatting
-    **primary use to write a initiallization data file for a lammps
-
-    ** example
-
-    # LAMMPS data file written by LammpsFileManipulation.py
-    275184 atoms
-    2 atom types
-    0.4892064609 119.789657019 xlo xhi
-    -158.7268972078 158.7268972078 ylo yhi
-    0.4917072972 119.7871561826 zlo zhi
-
-    Atoms  # atomic
-
-    1 2 2.59911 -158.671 2.89486
-    .
-    .
-    .
-
-    """
-
-    with open(file_path,"w") as file:
-        file.write("# LAMMPS data file written by LammpsFileManipulation.py \n")
-        file.write(str(dump_class.numberofatoms))
-        file.write(" atoms \n")
-        file.write(str(max(dump_class.atoms["type"])))
-        file.write("atom types \n")
-        file.write(str("{:.15f}".format(float(test.boxbounds["x"].loc["low"]))+" "+"{:.15f}".format(float(test.boxbounds["x"].loc["high"]))+" xlo xhi"))
-        file.write(str("{:.15f}".format(float(test.boxbounds["y"].loc["low"]))+" "+"{:.15f}".format(float(test.boxbounds["y"].loc["high"]))+" ylo yhi"))
-        file.write(str("{:.15f}".format(float(test.boxbounds["z"].loc["low"]))+" "+"{:.15f}".format(float(test.boxbounds["z"].loc["high"]))+" zlo zhi"))
-        file.write("\n\n")
-        file.write("Atoms  # atomic\n\n")
-
-    atomic_data = dump_class.atoms[["id","type", "x", "y", "z"]].to_csv(file_path,mode = "a", index = False,header = Flase ,sep = ' ')
+        else:
+            raise Exception('Mode entered for writing is not recognized ["a"= append to files, "w"= overwrite file]')
 
 def group_translate(dump_files, translation_operation):
     """
@@ -727,3 +724,79 @@ def group_translate(dump_files, translation_operation):
         translated_dump_files[dump_class_id] = dump_files[dump_class_id].translate([tran_x,tran_y,tran_z])
 
     return translated_dump_files
+
+
+def multiple_timestep_singular_file_dumps(file_path:str,ids:list = ["TimestepDefault"]):
+    """
+    this opens a multi-timestep lammps dump and converts it to a dictionary of
+    dumpFile classes with the keys set to the timesteps
+
+    ids:list = ["TimestepDefault"]
+    ids are set to the dumpclass timestep by default however if there are duplicates
+    this will override the timesteps so you can define the ids for the dictionary
+    """
+    dump_files = {} #dictionary of class
+
+    raw_data = pd.read_csv(file_path,header = None)#getting data
+    indexes = raw_data.index[raw_data[0] == "ITEM: TIMESTEP"].tolist()#getting splitting indexes
+
+    if len(ids) == len(indexes) or ids == ["TimestepDefault"]:
+
+        #splitting and iterating through pandas dataFrame
+        for ind, index in enumerate(indexes):
+
+            if ind < len(indexes)-1:
+                #all except last index
+                df = raw_data.loc[index:indexes[ind+1]-1,:]#making new dataFrame
+                dump_class = dumpFile.pandas_to_dumpfile(df)#dump class processing
+
+            else:
+                #last index
+                df = raw_data.loc[index:len(raw_data)+1,:]#making new dataFrame
+                dump_class = dumpFile.pandas_to_dumpfile(df)#dump class processing
+
+            #adding to dictionary
+            if ids == ["TimestepDefault"]:
+                #using timestep to insert
+                dump_files[int(dump_class.timestep)] = dump_class
+            else:
+                #using custom id
+                dump_files[ids[ind]] = dump_class
+
+        return dump_files
+
+
+    else:
+         warnings.warn("Length of ids list is not equal to files list length")
+
+
+def batch_import_files(file_paths:list,ids:list = ["TimestepDefault"]):
+    """
+    this opens several lammps dumps and converts it to a dictionary of
+    dumpFile classes with the keys set to the timesteps
+
+    ids:list = ["TimestepDefault"]
+    ids are set to the dumpclass timestep by default however if there are duplicates
+    this will override the timesteps so you can define the ids for the dictionary
+    """
+    if len(ids) == len(file_paths) or ids == ["TimestepDefault"]:
+
+        dump_files = {} #dictionary of class
+
+        for ind,file_path in enumerate(file_paths):
+            #importing class
+            dump_class = dumpFile.lammps_dump(file_path)
+
+            #adding to dictionary
+            if ids == ["TimestepDefault"]:
+                #using timestep to insert
+                dump_files[int(dump_class.timestep)] = dump_class
+            else:
+                #using custom id
+                dump_files[ids[ind]] = dump_class
+
+        return dump_files
+
+
+    else:
+         warnings.warn("Length of ids list is not equal to files list length")
