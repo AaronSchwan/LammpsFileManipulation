@@ -697,13 +697,3 @@ def group_translate(dump_files, quadrent):
         translated_dump_files[dump_class_id] = dump_files[dump_class_id].translate([tran_x,tran_y,tran_z])
 
     return translated_dump_files
-
-file_paths = []
-for i in range(0,20001,10000):
-    file_paths.append(fr"D:\Mines REU\Data\Raw\NVT\NEGB_0_NVT\dump.NEGB_0_NVT.{i}")
-
-dump_files = batch_import_files(file_paths,ids = range(0,3))
-print(dump_files)
-
-tran_dumps = group_translate(dump_files, 8)
-print(tran_dumps)
