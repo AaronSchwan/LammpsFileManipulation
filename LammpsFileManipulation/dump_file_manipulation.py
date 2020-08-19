@@ -6,7 +6,6 @@ This is a set of useful features for manipulating basic lammps output files
 author: Aaron Schwan
 email: schwanaaron@gmail.com
 github: https://github.com/AaronSchwan
-website: https://aaronschwan.wordpress.com/lammps-file-manipulation-package/
 ###############################################################################
 ###############################################################################
 
@@ -308,7 +307,7 @@ class dumpFile:
             raise Exception("You may not add two classes where the atomic conditions/placements are not equal")
 
     #Class functional methods###################################################
-    def translate(self,translation_operation,coordinate_sys = "active"):
+    def translate(self,translation_operation):
         """
         This function transforms the atoms of the class to different quadrents
         labeled below.
@@ -330,7 +329,7 @@ class dumpFile:
                 7 = - - +
                 8 = - - -
 
-        Custum Transform:
+        Custom Transform:
          The value is added to the atoms direction from the list in order [x_shift, y_shift, z_shift]
 
         """
@@ -580,7 +579,7 @@ def group_translate(dump_files, translation_operation):
         7 = - - +
         8 = - - -
 
-    Custum Transform:
+    Custom Transform:
      The value is added to the atoms direction from the list in order [x_shift, y_shift, z_shift]
 
     """

@@ -2,15 +2,14 @@ from distutils.core import setup
 setup(
   name = 'LammpsFileManipulation',
   packages = ['LammpsFileManipulation'],
-  version = '0.01',
+  version = '0.1',
   license='MIT',
   description = 'This is a package designed to help streamline the process of preprocessing LAMMPS output files for scientific calculations/manipulations in Python. The class structures are built using pandas DataFrames making it easy to manipulate.',
-  author = 'Aaron Schwan',                   
+  author = 'Aaron Schwan',
   author_email = 'schwanaaron@gmail.com',
   url = 'https://github.com/AaronSchwan/LammpsFileManipulation',
-  download_url = 'https://github.com/user/reponame/archive/v_01.tar.gz',
-  keywords = ['LAMMPS','atomistic'],   # Keywords that define your package best
-  install_requires=[
+  download_url = 'https://github.com/AaronSchwan/LammpsFileManipulation/releases/tag/v_0.1-alpha',
+  keywords = ['LAMMPS','atomistic',"dump file"],
           'pandas',
           'numpy',
       ],
