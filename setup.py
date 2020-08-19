@@ -8,7 +8,7 @@ setup(
   author = 'Aaron Schwan',
   author_email = 'schwanaaron@gmail.com',
   url = 'https://github.com/AaronSchwan/LammpsFileManipulation',
-  download_url = 'https://github.com/AaronSchwan/LammpsFileManipulation/releases/tag/v_0.1-alpha',
+  download_url = 'https://github.com/AaronSchwan/LammpsFileManipulation/releases/tag/v_0.11-alpha',
   keywords = ['LAMMPS','atomistic',"dump file"],
   install_requires=[
           'pandas',
