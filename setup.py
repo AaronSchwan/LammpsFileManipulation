@@ -10,9 +10,9 @@ setup(
   url = 'https://github.com/AaronSchwan/LammpsFileManipulation',
   download_url = 'https://github.com/AaronSchwan/LammpsFileManipulation/releases/tag/v_0.1-alpha',
   keywords = ['LAMMPS','atomistic',"dump file"],
+  install_requires=[
           'pandas',
-          'numpy',
-      ],
+          'numpy'],
   classifiers=[
     'Development Status :: 3 - Alpha',
     'Intended Audience :: Developers',
