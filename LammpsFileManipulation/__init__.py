@@ -1,1 +1,4 @@
-import LammpsFileManipulation.dump_file_manipulation 
+from LammpsFileManipulation.dump_file_manipulation import dumpFile
+from LammpsFileManipulation.dump_file_manipulation import group_translate
+from LammpsFileManipulation.dump_file_manipulation import multiple_timestep_singular_file_dumps
+from LammpsFileManipulation.dump_file_manipulation import batch_import_files
