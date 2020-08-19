@@ -309,7 +309,6 @@ class dumpFile:
 
     #Class functional methods###################################################
     def translate(self,translation_operation,coordinate_sys = "active"):
-
         """
         This function transforms the atoms of the class to different quadrents
         labeled below.
