@@ -84,108 +84,165 @@ class dumpFile:
     z_axis_cart = "z"
 
 
-    def __init__(self,timestep:int,boundingtypes:list,atoms:pd.DataFrame):
-        self.timestep = timestep
-        self.boundingtypes = boundingtypes
+    def __init__(self,sim_timestep:int,sim_numberofatoms:int,sim_boxbounds:pd.DataFrame,atoms:pd.DataFrame):
+        #required definitions
+        self.sim_timestep = sim_timestep
+        self.sim_numberofatoms = sim_numberofatoms
+        self.sim_boxbounds = sim_boxbounds
         self.atoms = atoms
 
+
     #property defined functions#################################################
+
+    #static properties
     @property
-    def numberofatoms(self):
-        #get axis
-        id = self.id
-        #finds the number of atoms for the given data
-        return len(self.atoms[id])
+    def sim_xlo(self):
+        return self.sim_boxbounds.loc["low","x"]
 
     @property
-    def boxbounds(self):
-        #get axes
-        x = self.x_axis_cart
-        y = self.y_axis_cart
-        z = self.z_axis_cart
-
-        #getting bounds and making custom format to values
-        box_dict = {"labels":["type","low","high"],"x":[self.boundingtypes[0],min(self.atoms[x]),max(self.atoms[x])],"y":[self.boundingtypes[1],min(self.atoms[y]),max(self.atoms[y])],"z":[self.boundingtypes[2],min(self.atoms[z]),max(self.atoms[z])]}
-        return pd.DataFrame.from_dict(box_dict).set_index("labels")
+    def sim_xhi(self):
+        return self.sim_boxbounds.loc["high","x"]
 
     @property
-    def xlo(self):
+    def sim_ylo(self):
+        return self.sim_boxbounds.loc["low","y"]
+    @property
+    def sim_yhi(self):
+        return self.sim_boxbounds.loc["high","y"]
+
+    @property
+    def sim_zlo(self):
+        return self.sim_boxbounds.loc["low","z"]
+
+    @property
+    def sim_zhi(self):
+        return self.sim_boxbounds.loc["high","z"]
+
+    @property
+    def sim_volume(self):
+        """
+        gets the volume of the overall simulation cell as a box
+        """
+        x_range = self.sim_xhi - self.sim_xlo
+        y_range = self.sim_yhi - self.sim_ylo
+        z_range = self.sim_zhi - self.sim_zlo
+
+        return x_range*y_range*z_range
+
+    @property
+    def sim_xy_area(self):
+        """
+        gets the area of the xy plane of the simulation cell as a box
+        """
+        x_range = self.sim_xhi - self.sim_xlo
+        y_range = self.sim_yhi - self.sim_ylo
+
+        return x_range*y_range
+
+    @property
+    def  sim_xz_area(self):
+        """
+        gets the area of the xy plane of the simulation cell as a box
+        """
+        x_range = self.sim_xhi - self.sim_xlo
+        z_range = self.sim_zhi - self.sim_zlo
+
+        return x_range*z_range
+
+    @property
+    def  sim_yz_area(self):
+        """
+        gets the area of the xy plane of the simulation cell as a box
+        """
+        z_range = self.sim_zhi - sim_zlo
+        y_range = self.sim_yhi - sim_ylo
+
+        return z_range*y_range
+
+    #changing properties
+    @property
+    def atomic_numberofatoms(self):
+        return len(self.atoms[self.x_axis_cart])
+    @property
+    def atomic_xlo(self):
         #get axis
         x = self.x_axis_cart
         return min(self.atoms[x])
 
     @property
-    def xhi(self):
+    def atomic_xhi(self):
         #get axis
         x = self.x_axis_cart
         return max(self.atoms[x])
 
     @property
-    def ylo(self):
+    def atomic_ylo(self):
         #get axis
         y = self.y_axis_cart
         return min(self.atoms[y])
 
     @property
-    def yhi(self):
+    def atomic_yhi(self):
         #get axis
         y = self.y_axis_cart
         return max(self.atoms[y])
 
     @property
-    def zlo(self):
+    def atomic_zlo(self):
         #get axis
         z = self.z_axis_cart
         return min(self.atoms[z])
 
     @property
-    def zhi(self):
+    def atomic_zhi(self):
         #get axis
         z = self.z_axis_cart
         return max(self.atoms[z])
 
     @property
-    def volume(self):
+    def atomic_volume(self):
         """
         gets the volume of the overall simulation cell as a box
         """
-        x_range = abs(self.boxbounds.loc["high","x"] - self.boxbounds.loc["low","x"])
-        y_range = abs(self.boxbounds.loc["high","y"] - self.boxbounds.loc["low","y"])
-        z_range = abs(self.boxbounds.loc["high","z"] - self.boxbounds.loc["low","z"])
+        x_range = self.atomic_xhi - self.atomic_xlo
+        y_range = self.atomic_yhi - self.atomic_ylo
+        z_range = self.atomic_yhi - self.atomic_ylo
 
         return x_range*y_range*z_range
 
     @property
-    def xy_area(self):
+    def atomic_xy_area(self):
         """
         gets the area of the xy plane of the simulation cell as a box
         """
-        x_range = abs(self.boxbounds.loc["high","x"] - self.boxbounds.loc["low","x"])
-        y_range = abs(self.boxbounds.loc["high","y"] - self.boxbounds.loc["low","y"])
+        x_range = self.atomic_xhi - self.atomic_xlo
+        y_range = self.atomic_yhi - self.atomic_ylo
 
         return x_range*y_range
 
     @property
-    def xz_area(self):
+    def  atomic_xz_area(self):
         """
         gets the area of the xy plane of the simulation cell as a box
         """
-        x_range = abs(self.boxbounds.loc["high","x"] - self.boxbounds.loc["low","x"])
-        z_range = abs(self.boxbounds.loc["high","z"] - self.boxbounds.loc["low","z"])
+        x_range = self.atomic_xhi - self.atomic_xlo
+        z_range = self.atomic_zhi - self.atomic_zlo
 
         return x_range*z_range
 
     @property
-    def yz_area(self):
+    def  atomic_yz_area(self):
         """
         gets the area of the xy plane of the simulation cell as a box
         """
-        z_range = abs(self.boxbounds.loc["high","z"] - self.boxbounds.loc["low","z"])
-        y_range = abs(self.boxbounds.loc["high","y"] - self.boxbounds.loc["low","y"])
+        z_range = self.atomic_zhi - self.atomic_zlo
+        y_range = self.atomic_yhi - self.atomic_ylo
 
         return z_range*y_range
 
-
+    @property
+    def atomic_boxbounds(self):
+        return pd.DataFrame(data = {"type":self.sim_boxbounds.loc["type"],"low":[self.atomic_xlo,self.atomic_ylo,self.atomic_zlo],"high":[self.atomic_xhi,self.atomic_yhi,self.atomic_zhi]},index = ["x","y","z"]).T
 
     #Alternative CLass Constructive Methods#####################################
     @classmethod
@@ -200,14 +257,18 @@ class dumpFile:
 
         if len(indexes) == 1:
             titles = raw_data.iloc[8].str.split(expand = True).iloc[0][2:].tolist()#getting titles of atomic data
-            data = pd.DataFrame(raw_data.iloc[9:,0].str.split(' ',len(titles)-1).tolist(), columns = titles)#getting atomic data
-            data =  data.apply(pd.to_numeric)
+            atoms = pd.DataFrame(raw_data.iloc[9:,0].str.split(' ',len(titles)-1).tolist(), columns = titles)#getting atomic data
+            atoms =  atoms.apply(pd.to_numeric)
 
             #getting bounds and making custom format to values
-            boxboundtype =  raw_data.iloc[4,0].replace("ITEM: BOX BOUNDS ","").split(" ")
+            boxboundtype =  raw_data.iloc[4,0].replace("ITEM: BOX BOUNDS ","").split(" ")#grabbing it prior to clean up later
+            box = pd.DataFrame(raw_data.iloc[5:8:,0].str.split(' ',len(titles)-1).tolist(), columns = ["low","high"],index= ["x","y","z"])
+            box = box.apply(pd.to_numeric).T
+            types = pd.DataFrame(data = boxboundtype[0:3],index = ["x","y","z"],columns = ["type"]).T
+            boxbounds = box.append(types)
 
             #returning class
-            return cls(int(raw_data.iloc[1,0]),boxboundtype,data)
+            return cls(int(raw_data.iloc[1,0]),int(raw_data.iloc[3,0]),boxbounds,atoms)
 
         elif len(indexes) > 1:
             raise Exception("FILE IMPORT ERROR: You may not import a multiple timestep file using this method please use the multiple_timestep_singular_file_dumps function")
@@ -227,14 +288,18 @@ class dumpFile:
 
         if len(indexes) == 1:
             titles = raw_data.iloc[8].str.split(expand = True).iloc[0][2:].tolist()#getting titles of atomic data
-            data = pd.DataFrame(raw_data.iloc[9:,0].str.split(' ',len(titles)-1).tolist(), columns = titles)#getting atomic data
-            data =  data.apply(pd.to_numeric)
+            atoms = pd.DataFrame(raw_data.iloc[9:,0].str.split(' ',len(titles)-1).tolist(), columns = titles)#getting atomic data
+            atoms =  atoms.apply(pd.to_numeric)
 
             #getting bounds and making custom format to values
-            boxboundtype =  raw_data.iloc[4,0].replace("ITEM: BOX BOUNDS ","").split(" ")
+            boxboundtype =  raw_data.iloc[4,0].replace("ITEM: BOX BOUNDS ","").split(" ")#grabbing it prior to clean up later
+            box = pd.DataFrame(raw_data.iloc[5:8:,0].str.split(' ',len(titles)-1).tolist(), columns = ["low","high"],index= ["x","y","z"])
+            box = box.apply(pd.to_numeric).T
+            types = pd.DataFrame(data = boxboundtype[0:3],index = ["x","y","z"],columns = ["type"]).T
+            boxbounds = box.append(types)
 
             #returning class
-            return cls(int(raw_data.iloc[1,0]),boxboundtype,data)
+            return cls(int(raw_data.iloc[1,0]),int(raw_data.iloc[3,0]),boxbounds,atoms)
 
         elif len(indexes) > 1:
             raise Exception("FILE IMPORT ERROR: You may not import a multiple timestep file using this method please use the multiple_timestep_singular_file_dumps function")
@@ -457,7 +522,7 @@ class dumpFile:
              raise Exception("Not a valid input to translation function")
 
     #writing out functions
-    def write_dump_file(self,file_path:str,mode:str = "a"):
+    def write_dump_file(self,file_path:str,mode:str = "a",use_atomic:bool = False, use_atomic_numberofatoms:bool = False):
         """
         This takes in a file path and writes a dumpFile class to the file path in
         standard lammps format
@@ -469,6 +534,7 @@ class dumpFile:
 
         """
 
+        #Check if everythings within the ranges
         if mode == "a" or mode == "w":
             precision = dumpFile.class_tolerance#get writing precision
             #defining new object
@@ -476,28 +542,55 @@ class dumpFile:
 
             with open(file_path,mode) as file:
                 file.write("ITEM: TIMESTEP \n")
-                file.write(str(dump_class_object.timestep))
+                file.write(str(dump_class_object.sim_timestep))
                 file.write("\n")
                 file.write("ITEM: NUMBER OF ATOMS \n")
-                file.write(str(dump_class_object.numberofatoms))
+
+                if use_atomic == True or use_atomic_numberofatoms == True:
+                    file.write(str(dump_class_object.atomic_numberofatoms))
+                else:
+                    if self.atomic_numberofatoms == self.sim_numberofatoms:
+                        file.write(str(dump_class_object.sim_numberofatoms))
+                    else:
+                        raise Exception("The number of atoms is now different than the simulation")
+
                 file.write("\n")
                 file.write("ITEM: BOX BOUNDS ")
-                file.write(str(dump_class_object.boundingtypes[0])+" "+str(dump_class_object.boundingtypes[1])+" "+str(dump_class_object.boundingtypes[2])+"\n")#bound types
-                file.write(str(round(dump_class_object.xlo,precision))+" "+str(round(dump_class_object.xhi,precision))+"\n")
-                file.write(str(round(dump_class_object.ylo,precision))+" "+str(round(dump_class_object.yhi,precision))+"\n")
-                file.write(str(round(dump_class_object.zlo,precision))+" "+str(round(dump_class_object.zhi,precision))+"\n")
+
+                if use_atomic == True:
+                    types = dump_class_object.atomic_boxbounds.loc["type"].tolist()
+                    file.write(types[0]+" "+types[1]+" "+types[2])
+                    file.write("\n")
+                    lows = dump_class_object.atomic_boxbounds.loc["low"].tolist()
+                    highs = dump_class_object.atomic_boxbounds.loc["high"].tolist()
+                    file.write(str(round(lows[0],precision))+" "+str(round(highs[0],precision))+"\n")
+                    file.write(str(round(lows[1],precision))+" "+str(round(highs[1],precision))+"\n")
+                    file.write(str(round(lows[2],precision))+" "+str(round(highs[2],precision))+"\n")
+
+                else:
+                    if self.sim_xlo <= self.atomic_xlo and self.sim_ylo <= self.atomic_ylo and self.sim_zlo <= self.atomic_zlo and self.sim_xhi >= self.atomic_xhi and self.sim_yhi >= self.atomic_yhi and self.sim_zhi >= self.atomic_zhi:
+                        types = dump_class_object.sim_boxbounds.loc["type"].tolist()
+                        file.write(types[0]+" "+types[1]+" "+types[2])
+                        file.write("\n")
+                        lows = dump_class_object.sim_boxbounds.loc["low"].tolist()
+                        highs = dump_class_object.sim_boxbounds.loc["high"].tolist()
+                        file.write(str(round(lows[0],precision))+" "+str(round(highs[0],precision))+"\n")
+                        file.write(str(round(lows[1],precision))+" "+str(round(highs[1],precision))+"\n")
+                        file.write(str(round(lows[2],precision))+" "+str(round(highs[2],precision))+"\n")
+
+                    else:
+                        raise Exception("The atomic positions are not contained within the simulation positions")
+
                 file.write("ITEM: ATOMS ")
 
 
             dump_class_object.atoms.round(precision).to_csv(file_path,mode = "a", index = False,sep = ' ')
             del dump_class_object
-
-
         else:
             raise Exception('Mode entered for writing is not recognized ["a"= append to files, "w"= overwrite file]')
 
 
-    def write_dump_to_data_format(self, file_path:str,mode:str = "a"):
+    def write_dump_to_data_format(self, file_path:str,mode:str = "a",use_atomic:bool = False, use_atomic_numberofatoms:bool = False):
         """
         writes dumpFile class to a data file format
 
@@ -536,13 +629,29 @@ class dumpFile:
 
             with open(file_path,"w") as file:
                 file.write("# LAMMPS data file written by LammpsFileManipulation.py \n")
-                file.write(str(dump_class.numberofatoms))
+
+                if use_atomic == True or use_atomic_numberofatoms == True:
+                    file.write(str(dump_class.atomic_numberofatoms))
+                else:
+                    if self.sim_numberofatoms == self.atomic_numberofatoms:
+                        file.write(str(dump_class.sim_numberofatoms))
+                    else:
+                        raise Exception("The number of atoms of the simulation has changed")
+
                 file.write(" atoms \n")
                 file.write(str(max(dump_class.atoms["type"])))
                 file.write(" atom types \n")
-                file.write(str(round(dump_class_object.xlo,precision))+" "+str(round(dump_class_object.xhi,precision))+" xlo xhi\n")
-                file.write(str(round(dump_class_object.ylo,precision))+" "+str(round(dump_class_object.yhi,precision))+" ylo yhi\n")
-                file.write(str(round(dump_class_object.zlo,precision))+" "+str(round(dump_class_object.zhi,precision))+" zlo zhi\n")
+                if use_atomic == True:
+                    file.write(str(round(dump_class_object.atomic_xlo,precision))+" "+str(round(dump_class_object.atomic_xhi,precision))+" xlo xhi\n")
+                    file.write(str(round(dump_class_object.atomic_ylo,precision))+" "+str(round(dump_class_object.atomic_yhi,precision))+" ylo yhi\n")
+                    file.write(str(round(dump_class_object.atomic_zlo,precision))+" "+str(round(dump_class_object.atomic_zhi,precision))+" zlo zhi\n")
+                else:
+                    if  self.sim_xlo <= self.atomic_xlo and self.sim_ylo <= self.atomic_ylo and self.sim_zlo <= self.atomic_zlo and self.sim_xhi <= self.atomic_xhi and self.sim_yhi <= self.atomic_yhi and self.sim_zhi <= self.atomic_zhi:
+                        file.write(str(round(dump_class_object.sim_xlo,precision))+" "+str(round(dump_class_object.sim_xhi,precision))+" xlo xhi\n")
+                        file.write(str(round(dump_class_object.sim_ylo,precision))+" "+str(round(dump_class_object.sim_yhi,precision))+" ylo yhi\n")
+                        file.write(str(round(dump_class_object.sim_zlo,precision))+" "+str(round(dump_class_object.sim_zhi,precision))+" zlo zhi\n")
+                    else:
+                        raise Exception("The atomic data positions are not contained in the simulation bounds")
                 file.write("\n\n")
                 file.write("Atoms  # atomic\n\n")
 
@@ -798,3 +907,12 @@ def batch_import_files(file_paths:list,ids:list = ["TimestepDefault"]):
 
     else:
          warnings.warn("Length of ids list is not equal to files list length")
+
+
+
+dump_class = dumpFile.lammps_dump(r"C:\Users\Aaron Schwan\Desktop\NEGB 0\TMin_0.0001_NEGB_0_NVT.0")
+print(dump_class.sim_boxbounds)
+print(dump_class.sim_numberofatoms)
+print(dump_class.atomic_boxbounds)
+print(dump_class.atomic_numberofatoms)
+dump_class.write_dump_file(r"C:\Users\Aaron Schwan\Desktop\TMin_0.0001_NEGB_0_NVT.10",use_atomic = True)
