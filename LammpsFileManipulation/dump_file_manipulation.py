@@ -96,6 +96,10 @@ class dumpFile:
 
     #static properties
     @property
+    def boundingtypes(self):
+        return self.sim_boxbounds.loc["type"]
+
+    @property
     def sim_xlo(self):
         return self.sim_boxbounds.loc["low","x"]
 
@@ -320,10 +324,13 @@ class dumpFile:
     #dubble under functions#####################################################
     def __repr__(self):
         #returning the atoms by default when calling the function alone
-        return "{TimeStep:"+str(self.timestep)+"\nBoundings"+str(self.boxbounds)+"\nColumns of atomic data"+str(self.atoms.columns)+"}"
+        return "{TimeStep:"+str(self.sim_timestep)+"\nBoundings"+str(self.sim_boxbounds)+"\nColumns of atomic data"+str(self.atoms.columns)+"}"
 
     def __eq__(self,other):
         """
+        This will use the atomic properties becasue this is more important to
+        the meshing of the classes
+
         This checks if the base conditions are equal such as the number of atoms,
         the boundary after transform to the first boundary, then if it passes
         both of those conditions it will check the atoms positions within a given
@@ -339,7 +346,7 @@ class dumpFile:
         checks in order: number of atoms -> atomic positions
         """
 
-        if self.numberofatoms == other.numberofatoms:
+        if self.atomic_numberofatoms == other.atomic_numberofatoms:
             #subtraction method because pd.equals will return false unless more operations are done
             df_self = self.translate(1).atoms[[self.id,self.x_axis_cart,self.y_axis_cart,self.z_axis_cart]]
             df_other = other.translate(1).atoms[[self.id,self.x_axis_cart,self.y_axis_cart,self.z_axis_cart]]
@@ -347,7 +354,67 @@ class dumpFile:
             if df[self.id].eq(0).all() and df[self.x_axis_cart].eq(0).all()and df[self.y_axis_cart].eq(0).all() and df[self.z_axis_cart].eq(0).all():
                 return True
             else:
-                return False
+                #handeling periodic boundaries
+
+                if df[self.id].eq(0).all() == True:
+
+                    axes_pass = 0;
+
+                    if df[self.x_axis_cart].eq(0).all() == True:
+                        axes_pass += 1
+                    else:
+                        if self.boundingtypes["x"] == "pp":
+                            x_vals = df[df[self.x_axis_cart] != 0].abs()#getting values of errored lists
+                            #checking if magnitude is equal to the simulation axis
+                            vals = (x_vals-self.sim_xhi-self.sim_xlo).round(dumpFile.checking_tolerance)
+                            #adding to axes if it is true
+                            if vals.eq(0).all():
+                                axes_pass += 1
+                            else:
+                                return False
+                        else:
+                            return False
+
+                    if df[self.y_axis_cart].eq(0).all() == True:
+                        axes_pass += 1
+                    else:
+                        if self.boundingtypes["y"] == "pp":
+                            y_vals = df[df[self.y_axis_cart] != 0].abs()#getting values of errored lists
+                            #checking if magnitude is equal to the simulation axis
+                            vals = (y_vals-self.sim_yhi-self.sim_ylo).round(dumpFile.checking_tolerance)
+                            #adding to axes if it is true
+                            if vals.eq(0).all():
+                                axes_pass += 1
+                            else:
+                                return False
+                        else:
+                            return False
+
+                    if df[self.z_axis_cart].eq(0).all() == True:
+                        axes_pass += 1
+                    else:
+                        if self.boundingtypes["z"] == "pp":
+                            z_vals = df[df[self.z_axis_cart] != 0].abs()#getting values of errored lists
+                            #checking if magnitude is equal to the simulation axis
+                            vals = (z_vals-self.sim_zhi-self.sim_zlo).round(dumpFile.checking_tolerance)
+                            #adding to axes if it is true
+                            if vals.eq(0).all():
+                                axes_pass += 1
+                            else:
+                                return False
+                        else:
+                            return False
+
+
+                    if axes_pass == 3:
+                        return True
+
+                    else:
+                        return False
+
+
+                else:
+                    return False
 
         else:
             return False
@@ -366,7 +433,7 @@ class dumpFile:
             unique_columns = np.setdiff1d(other.atoms.columns.tolist(),self.atoms.columns.tolist())
 
             atomic_data = self.atoms.join(other.atoms[unique_columns])#merged atoms
-            return dumpFile(self.timestep,self.boundingtypes,atomic_data)
+            return dumpFile(self.sim_timestep,self.sim_numberofatoms,self.sim_boxbounds,atomic_data)
 
         else:
             raise Exception("You may not add two classes where the atomic conditions/placements are not equal")
@@ -909,10 +976,165 @@ def batch_import_files(file_paths:list,ids:list = ["TimestepDefault"]):
          warnings.warn("Length of ids list is not equal to files list length")
 
 
+def merge(dump_class_1:dumpFile,dump_class_2:dumpFile)->dumpFile:
+    """
+    This is an alternative merge method to addition or using pandas
 
-dump_class = dumpFile.lammps_dump(r"C:\Users\Aaron Schwan\Desktop\NEGB 0\TMin_0.0001_NEGB_0_NVT.0")
-print(dump_class.sim_boxbounds)
-print(dump_class.sim_numberofatoms)
-print(dump_class.atomic_boxbounds)
-print(dump_class.atomic_numberofatoms)
-dump_class.write_dump_file(r"C:\Users\Aaron Schwan\Desktop\TMin_0.0001_NEGB_0_NVT.10",use_atomic = True)
+    The main difference between this and simply adding is that this will not
+    check compatability with the class it will simply add the atoms dataframe
+    unique columns to the the leftmost dumpFile object
+
+    the leftmost is the main one for all overlapping column names the left will
+    be used
+    """
+
+    unique_columns = np.setdiff1d(dump_class_2.atoms.columns.tolist(),dump_class_1.atoms.columns.tolist())
+
+    atomic_data = dump_class_1.atoms.join(dump_class_2.atoms[unique_columns])#merged atoms
+
+    return dumpFile(dump_class_1.sim_timestep,dump_class_1.sim_numberofatoms,dump_class_1.sim_boxbounds,atomic_data)
+
+def cart_slice(dump_class_to_slice:dumpFile,xlo,xhi,ylo,yhi,zlo,zhi):
+    """
+    "Slices" a dumpclass based on given x y z bounds
+
+    this means all the atoms in a given volume are selected making a new class
+    LEAVING THE SIMULATION VALUES THE SAME
+    """
+    dump_class = copy.deepcopy(dump_class_to_slice)#copying to return a new one
+
+    df =  dump_class.atoms
+    dump_class.atoms = df[(df[dump_class.x_axis_cart] <= xhi) & (xlo <= df[dump_class.x_axis_cart]) & (df[dump_class.y_axis_cart] <= yhi) & (ylo <= df[dump_class.y_axis_cart]) & (df[dump_class.z_axis_cart] <= zhi) & (zlo <= df[dump_class.z_axis_cart])]
+
+    return dump_class
+
+def bin_count(dump_class:dumpFile,axis,number_of_bins,overlap_proportion = 0.0)-> pd.DataFrame:
+    """
+    given a dumpFile class axis number_of_bins and overlap this will make a list of how
+    many atoms are in the given area
+
+    number_of_bins[int] = the number of bins
+    overlap_proportion[float] = proportional overal of the bins 1 full bin [0,1]
+
+
+    axis = "x" or "y" or "z"
+    """
+
+    counts = []#list of the counted atoms
+    low_bound = []#list of the low bounds
+    high_bound = []#list of the high bounds
+
+    if axis == "x":
+        #find thickness
+        thickness = (abs(dump_class.atomic_xhi)+abs(dump_class.atomic_xlo))/(number_of_bins*(1-overlap_proportion))
+        overlap = thickness*overlap_proportion
+
+        #get bounds for slice
+        ylo = dump_class.atomic_ylo
+        yhi = dump_class.atomic_yhi
+        zlo = dump_class.atomic_zlo
+        zhi = dump_class.atomic_zhi
+        xlo = dump_class.atomic_xlo
+        xhi = xlo+thickness
+
+        itter = 0;
+
+        while xhi <=  dump_class.atomic_xhi:
+
+            boxed = cart_slice(dump_class,xlo,xhi,ylo,yhi,zlo,zhi)
+            counts.append(boxed.atomic_numberofatoms)
+            low_bound.append(xlo)
+            high_bound.append(xhi)
+
+            if overlap_proportion != 0.0 and itter!= 0:
+                boxed = cart_slice(dump_class,xlo-overlap,xhi-overlap,ylo,yhi,zlo,zhi)
+                counts.append(boxed.atomic_numberofatoms)
+                low_bound.append(xlo-overlap)
+                high_bound.append(xhi-overlap)
+
+
+            xlo = xlo+thickness
+            xhi = xhi+thickness
+
+            itter = 1
+
+        count_df = pd.DataFrame(data = [counts,low_bound,high_bound], index = ["bin_counts","lower_bound","higher_bound"]).transpose()
+        return count_df
+
+    elif axis == "y":
+        #find thickness
+        thickness = (abs(dump_class.atomic_yhi)+abs(dump_class.atomic_ylo))/(number_of_bins*(1-overlap_proportion))
+        overlap = thickness*overlap_proportion
+
+        #get bounds for slice
+        xlo = dump_class.atomic_xlo
+        xhi = dump_class.atomic_xhi
+        zlo = dump_class.atomic_zlo
+        zhi = dump_class.atomic_zhi
+        ylo = dump_class.atomic_ylo
+        yhi = ylo+thickness
+
+        itter = 0;
+
+        while yhi <=  dump_class.atomic_yhi:
+
+            boxed = cart_slice(dump_class,xlo,xhi,ylo,yhi,zlo,zhi)
+            counts.append(boxed.atomic_numberofatoms)
+            low_bound.append(ylo)
+            high_bound.append(yhi)
+
+            if overlap_proportion != 0.0 and itter!= 0:
+                boxed = cart_slice(dump_class,xlo,xhi,ylo-overlap,yhi-overlap,zlo,zhi)
+                counts.append(boxed.atomic_numberofatoms)
+                low_bound.append(ylo-overlap)
+                high_bound.append(yhi-overlap)
+
+
+            ylo = ylo+thickness
+            yhi = yhi+thickness
+
+            itter =1
+
+
+        count_df = pd.DataFrame(data = [counts,low_bound,high_bound], index = ["bin_counts","lower_bound","higher_bound"]).transpose()
+        return count_df
+
+    elif axis == "z":
+            #find thickness
+            thickness = (abs(dump_class.atomic_zhi)+abs(dump_class.atomic_zlo))/(number_of_bins*(1-overlap_proportion))
+            overlap = thickness*overlap_proportion
+
+            #get bounds for slice
+            ylo = dump_class.atomic_ylo
+            yhi = dump_class.atomic_yhi
+            xlo = dump_class.atomic_xlo
+            xhi = dump_class.atomic_xhi
+            zlo = dump_class.atomic_zlo
+            zhi = zlo+thickness
+
+            itter = 0;
+
+            while zhi <=  dump_class.atomic_zhi:
+
+                boxed = cart_slice(dump_class,xlo,xhi,ylo,yhi,zlo,zhi)
+                counts.append(boxed.atomic_numberofatoms)
+                low_bound.append(zlo)
+                high_bound.append(zhi)
+
+                if overlap_proportion != 0.0 and itter!= 0:
+                    boxed = cart_slice(dump_class,xlo,xhi,ylo,yhi,zlo-overlap,zhi-overlap)
+                    counts.append(boxed.atomic_numberofatoms)
+                    low_bound.append(zlo-overlap)
+                    high_bound.append(zhi-overlap)
+
+
+                zlo = zlo+thickness
+                zhi = zhi+thickness
+
+                itter = 1
+
+            count_df = pd.DataFrame(data = [counts,low_bound,high_bound], index = ["bin_counts","lower_bound","higher_bound"]).transpose()
+            return count_df
+
+    else:
+        raise Exception("Could not finish bin_count operation")
