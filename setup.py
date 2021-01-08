@@ -11,7 +11,7 @@ README = (HERE / "README.md").read_text()
 setup(
   name = 'LammpsFileManipulation',
   packages = ['LammpsFileManipulation'],
-  version = '0.12',
+  version = '0.13',
   license='MIT',
   description = 'This is a package designed to help streamline the process of preprocessing LAMMPS output files for scientific calculations/manipulations in Python. The class structures are built using pandas DataFrames making it easy to manipulate.',
   long_discription = README,
@@ -19,7 +19,7 @@ setup(
   author = 'Aaron Schwan',
   author_email = 'schwanaaron@gmail.com',
   url = 'https://github.com/AaronSchwan/LammpsFileManipulation',
-  download_url = 'https://github.com/AaronSchwan/LammpsFileManipulation/releases/tag/v_0.11-alpha',
+  download_url = 'https://github.com/AaronSchwan/LammpsFileManipulation/releases/tag/v_0.13-alpha',
   keywords = ['LAMMPS','atomistic',"dump file"],
   install_requires=[
           'pandas',
