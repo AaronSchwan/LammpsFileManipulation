@@ -7,6 +7,8 @@ HERE = pathlib.Path(__file__).parent
 # The text of the README file
 README = "README.MD"
 
+with open(README,'r') as fh:
+    long_description = fh.read()
 
 setup(
   name = 'LammpsFileManipulation',
@@ -14,7 +16,7 @@ setup(
   version = '0.14',
   license='MIT',
   description = 'This is a package designed to help streamline the process of preprocessing LAMMPS output files for scientific calculations/manipulations in Python. The class structures are built using pandas DataFrames making it easy to manipulate.',
-  long_discription = README,
+  long_discription = long_description,
   long_discription_content_type = "text/markdown",
   author = 'Aaron Schwan',
   author_email = 'schwanaaron@gmail.com',
