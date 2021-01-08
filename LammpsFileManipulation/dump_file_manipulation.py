@@ -266,8 +266,10 @@ class dumpFile:
 
             #getting bounds and making custom format to values
             boxboundtype =  raw_data.iloc[4,0].replace("ITEM: BOX BOUNDS ","").split(" ")#grabbing it prior to clean up later
+
             box = pd.DataFrame(raw_data.iloc[5:8:,0].str.split(' ',len(titles)-1).tolist(), columns = ["low","high"],index= ["x","y","z"])
             box = box.apply(pd.to_numeric).T
+
             types = pd.DataFrame(data = boxboundtype[0:3],index = ["x","y","z"],columns = ["type"]).T
             boxbounds = box.append(types)
 
@@ -348,8 +350,8 @@ class dumpFile:
 
         if self.atomic_numberofatoms == other.atomic_numberofatoms:
             #subtraction method because pd.equals will return false unless more operations are done
-            df_self = self.translate(1).atoms[[self.id,self.x_axis_cart,self.y_axis_cart,self.z_axis_cart]]
-            df_other = other.translate(1).atoms[[self.id,self.x_axis_cart,self.y_axis_cart,self.z_axis_cart]]
+            df_self = self.atomic_translate(1).atoms[[self.id,self.x_axis_cart,self.y_axis_cart,self.z_axis_cart]]
+            df_other = other.atomic_translate(1).atoms[[self.id,self.x_axis_cart,self.y_axis_cart,self.z_axis_cart]]
             df = (df_self-df_other).round(dumpFile.checking_tolerance)
             if df[self.id].eq(0).all() and df[self.x_axis_cart].eq(0).all()and df[self.y_axis_cart].eq(0).all() and df[self.z_axis_cart].eq(0).all():
                 return True
@@ -439,7 +441,7 @@ class dumpFile:
             raise Exception("You may not add two classes where the atomic conditions/placements are not equal")
 
     #Class functional methods###################################################
-    def translate(self,translation_operation):
+    def atomic_translate(self,translation_operation):
         """
         This function transforms the atoms of the class to different quadrents
         labeled below.
@@ -487,6 +489,156 @@ class dumpFile:
             dir_y = 1
 
         if min(dump_class_object.atoms[z]) > 0:
+            dir_z = -1
+        else:
+            dir_z = 1
+
+        #standard translation_operationtransforms
+        if translation_operation == 1:
+
+            dump_class_object.atoms[x] = dump_class_object.atoms[x] - min(dump_class_object.atoms[x])
+            dump_class_object.atoms[y] = dump_class_object.atoms[y] - min(dump_class_object.atoms[y])
+            dump_class_object.atoms[z] = dump_class_object.atoms[z] - min(dump_class_object.atoms[z])
+
+            return dump_class_object
+
+        elif translation_operation == 2:
+            dump_class_object.atoms[x] = dump_class_object.atoms[x] - min(dump_class_object.atoms[x])
+            dump_class_object.atoms[y] = dump_class_object.atoms[y] - min(dump_class_object.atoms[y])
+            dump_class_object.atoms[z] = dump_class_object.atoms[z] + dir_z*min(dump_class_object.atoms[z])
+            dump_class_object.atoms[z] = dump_class_object.atoms[z] - max(dump_class_object.atoms[z])
+
+            return dump_class_object
+
+        elif translation_operation == 3:
+            dump_class_object.atoms[x] = dump_class_object.atoms[x] - min(dump_class_object.atoms[x])
+            dump_class_object.atoms[y] = dump_class_object.atoms[y] + dir_x*min(dump_class_object.atoms[y])
+            dump_class_object.atoms[y] = dump_class_object.atoms[y] - max(dump_class_object.atoms[y])
+            dump_class_object.atoms[z] = dump_class_object.atoms[z] - min(dump_class_object.atoms[z])
+
+            return dump_class_object
+
+        elif translation_operation == 4:
+            dump_class_object.atoms[x] = dump_class_object.atoms[x] - min(dump_class_object.atoms[x])
+            dump_class_object.atoms[y] = dump_class_object.atoms[y] + dir_x*min(dump_class_object.atoms[y])
+            dump_class_object.atoms[y] = dump_class_object.atoms[y] - max(dump_class_object.atoms[y])
+            dump_class_object.atoms[z] = dump_class_object.atoms[z] + dir_x*min(dump_class_object.atoms[z])
+            dump_class_object.atoms[z] = dump_class_object.atoms[z] - max(dump_class_object.atoms[z])
+
+            return dump_class_object
+
+        elif translation_operation == 5:
+            dump_class_object.atoms[x] = dump_class_object.atoms[x] + dir_x*min(dump_class_object.atoms[x])
+            dump_class_object.atoms[x] = dump_class_object.atoms[x] - max(dump_class_object.atoms[x])
+            dump_class_object.atoms[y] = dump_class_object.atoms[y] - min(dump_class_object.atoms[y])
+            dump_class_object.atoms[z] = dump_class_object.atoms[z] - min(dump_class_object.atoms[z])
+
+            return dump_class_object
+
+        elif translation_operation == 6:
+            dump_class_object.atoms[x] = dump_class_object.atoms[x] + dir_x*min(dump_class_object.atoms[x])
+            dump_class_object.atoms[x] = dump_class_object.atoms[x] - max(dump_class_object.atoms[x])
+            dump_class_object.atoms[y] = dump_class_object.atoms[y] - min(dump_class_object.atoms[y])
+            dump_class_object.atoms[z] = dump_class_object.atoms[z] + dir_x*min(dump_class_object.atoms[z])
+            dump_class_object.atoms[z] = dump_class_object.atoms[z] - max(dump_class_object.atoms[z])
+
+            return dump_class_object
+
+        elif translation_operation == 7:
+            dump_class_object.atoms[x] = dump_class_object.atoms[x] + dir_x*min(dump_class_object.atoms[x])
+            dump_class_object.atoms[x] = dump_class_object.atoms[x] - max(dump_class_object.atoms[x])
+            dump_class_object.atoms[y] = dump_class_object.atoms[y] + dir_x*min(dump_class_object.atoms[y])
+            dump_class_object.atoms[y] = dump_class_object.atoms[y] - max(dump_class_object.atoms[y])
+            dump_class_object.atoms[z] = dump_class_object.atoms[z] - min(dump_class_object.atoms[z])
+
+            return dump_class_object
+
+        elif translation_operation == 8:
+            dump_class_object.atoms[x] = dump_class_object.atoms[x] + dir_x*min(dump_class_object.atoms[x])
+            dump_class_object.atoms[x] = dump_class_object.atoms[x] - max(dump_class_object.atoms[x])
+            dump_class_object.atoms[y] = dump_class_object.atoms[y] + dir_x*min(dump_class_object.atoms[y])
+            dump_class_object.atoms[y] = dump_class_object.atoms[y] - max(dump_class_object.atoms[y])
+            dump_class_object.atoms[z] = dump_class_object.atoms[z] + dir_x*min(dump_class_object.atoms[z])
+            dump_class_object.atoms[z] = dump_class_object.atoms[z] - max(dump_class_object.atoms[z])
+
+            return dump_class_object
+
+        elif translation_operation == 0:
+
+            dump_class_object.atoms[x] = dump_class_object.atoms[x] - min(dump_class_object.atoms[x])
+            dump_class_object.atoms[y] = dump_class_object.atoms[y] - min(dump_class_object.atoms[y])
+            dump_class_object.atoms[z] = dump_class_object.atoms[z] - min(dump_class_object.atoms[z])
+
+            dump_class_object.atoms[x] = dump_class_object.atoms[x] - (max(dump_class_object.atoms[x])/2)
+            dump_class_object.atoms[y] = dump_class_object.atoms[y] - (max(dump_class_object.atoms[y])/2)
+            dump_class_object.atoms[z] = dump_class_object.atoms[z] - (max(dump_class_object.atoms[z])/2)
+
+            return dump_class_object
+
+        elif type(translation_operation) == list:
+            if all(isinstance(i, (float, int)) for i in translation_operation) and len(translation_operation) == 3:
+                dump_class_object.atoms[x] = dump_class_object.atoms[x] + translation_operation[0]
+                dump_class_object.atoms[y] = dump_class_object.atoms[y] + translation_operation[1]
+                dump_class_object.atoms[z] = dump_class_object.atoms[z] + translation_operation[2]
+
+                return dump_class_object
+
+
+            else:
+                 raise Exception("Not a valid input to translation function custom list")
+
+        else:
+             raise Exception("Not a valid input to translation function")
+
+
+    def sim_translate(self,translation_operation):
+        """
+        This function transforms the atoms of the class to different quadrents
+        labeled below.
+
+        proper call:
+        translated = class_instance.translate(translation_operation)
+
+        The predefined quadrent operations will make sure one boundry is a 0 0 0
+
+        Standards Cartesian:
+         quadrent = x y z
+                0 = centered at 0 0 0
+                1 = + + +
+                2 = + + -
+                3 = + - +
+                4 = + - -
+                5 = - + +
+                6 = - + -
+                7 = - - +
+                8 = - - -
+
+        Custom Transform:
+         The value is added to the atoms direction from the list in order [x_shift, y_shift, z_shift]
+
+        """
+
+
+        #defining new object
+        dump_class_object = copy.deepcopy(self)
+
+
+        id = self.id
+        x = self.x_axis_cart
+        y = self.y_axis_cart
+        z = self.z_axis_cart
+        #getting correction direction for minimums
+        if min(dump_class_object.sim_boxbounds["x"]["low"]) > 0:
+            dir_x = -1
+        else:
+            dir_x = 1
+
+        if min(dump_class_object.sim_boxbounds["y"]["low"]) > 0:
+            dir_y = -1
+        else:
+            dir_y = 1
+
+        if min(dump_class_object.sim_boxbounds["z"]["low"]) > 0:
             dir_z = -1
         else:
             dir_z = 1
@@ -1138,3 +1290,7 @@ def bin_count(dump_class:dumpFile,axis,number_of_bins,overlap_proportion = 0.0)-
 
     else:
         raise Exception("Could not finish bin_count operation")
+
+
+dump_file = dumpFile.lammps_dump(r"D:\Mines REU\Data\CU_GBs\NVT\GMM Batch NEGB 441 NVT\Moments.Tmin.441.0")
+print(dump_file)
