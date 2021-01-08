@@ -15,7 +15,7 @@ setup(
   license='MIT',
   description = 'This is a package designed to help streamline the process of preprocessing LAMMPS output files for scientific calculations/manipulations in Python. The class structures are built using pandas DataFrames making it easy to manipulate.',
   long_discription = README,
-  long_discription_content_type = "text/markdown"
+  long_discription_content_type = "text/markdown",
   author = 'Aaron Schwan',
   author_email = 'schwanaaron@gmail.com',
   url = 'https://github.com/AaronSchwan/LammpsFileManipulation',
