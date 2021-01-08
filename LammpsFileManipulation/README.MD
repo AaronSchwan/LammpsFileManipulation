@@ -1,0 +1,182 @@
+# LAMMPS File Manipulation Package
+
+This is a package designed to help streamline the process of preprocessing LAMMPS output files for scientific calculations/manipulations in Python. The class structures are built using pandas DataFrames making it easy to manipulate. Currently this only supports dump files in a text format. Soon to be added are data file capabilities and other file formats. A current assumption is that the operations are done in Cartesian Space and all shapes are square.
+### Disclaimer
+I am in no way associated with sandia labs or the LAMMPS software team this is just something I believe is usefel for the scientific community however niche
+
+---
+## Installing and Importing
+Install: `pip install LammpsFileManipulation`
+Import: `import LammpsFileManipulation as LFM`
+
+
+---
+# Dump Class Features
+### dumpFile class
+This is a class optimized for operations on dump files exported from lammps
+  programs
+
+`obj = LFM.dumpFile(timestep:int,numberofatoms:int,boxbounds:pd.DataFrame,atoms:pd.DataFrame,serial=None)`
+
+**Alternative class construction methods(file_path = path to file):**
+dumpFile.lammps_dump(cls, file_path) #reads in a standard lammps dump
+dumpFile.pandas_to_dumpfile(cls, file_path) #reads in lammps data from pandas dataframe to new
+**valid property calls:**
+obj.timestep = returns timestep in the file[int]
+obj.numberofatoms = numbers of atoms in the dump[int]
+obj.atoms = atomic data[pd.DataFrame]
+obj.boxbounds = returns the bounds with type,low,high in a pandas datframe[pd.DataFrame]
+obj.volume = returns cubic shaped volume
+obj.xy_area = returns square shaped area of xy plane
+obj.xz_area = returns square shaped area of xz plane
+obj.yz_area = returns square shaped area of yz plane
+obj.xlo = low x value in obj.atoms
+obj.ylo = low y value in obj.atoms
+obj.zlo = low z value in obj.atoms
+obj.xhi = high x value in obj.atoms
+obj.yhi = high y value in obj.atoms
+obj.zhi = high z value in obj.atoms
+
+**Mathmatical Operations**
+*Equals*
+`obj1 == obj2`
+returns if the atomic positional distances are identical uses the class variable checking_tolerance for amount of precission in check
+*Addition*
+`merged_obj = obj1+obj2`
+alternative way to merge data of the obj.atoms this will check that the atomic positions are equal and then will add the unique columns of obj2 to the obj1 this means that the obj1 columns are the same and no overwriting occurs
+
+## method calls
+**Translating the atoms positions**
+`new_obj = obj.translate(translation_operation,)`
+method to translate atom locations of the instance this *will return a new instance* of the class in order to preserve data integrety for the class instance
+translated = class_instance.translate(translation_operation)
+
+The predefined quadrent operations will make sure one boundry is a 0 0 0
+
+Standards Cartesian:
+ quadrent = x y z
+        0 = centered at 0 0 0
+        1 = + + +
+        2 = + + -
+        3 = + - +
+        4 = + - -
+        5 = - + +
+        6 = - + -
+        7 = - - +
+        8 = - - -
+
+Custom Transform:
+The value is added to the atoms location from the list in order [x_shift, y_shift, z_shift]
+
+**Writing a new dump file**
+`write_dump_file(self,file_path:str,mode:str = "a")`
+This takes in a file path and writes a dumpFile class to the file path in
+standard lammps format
+
+write_lammps_dump(file_path:str,dump_class:dumpFile,mode:str = "a")
+
+file_path = path to file [str]
+mode = overwrite("w") or append("a") **default append [str]
+
+```
+ITEM: TIMESTEP
+10000
+ITEM: NUMBER OF ATOMS
+275184
+ITEM: BOX BOUNDS pp pp pp
+4.9560543895066389e-01 1.1978325804094933e+02
+-1.5869515341562740e+02 1.5869515341562740e+02
+4.9786870883599993e-01 1.1978099477096400e+02
+ITEM: ATOMS id type x y z c_eng c_csym ...
+1 2 2.59722 -158.646 2.91064 -3.27376 10.8937
+.
+.
+.
+```
+**Writing a new dump file to data file format**
+`obj.write_dump_to_data_format(self, file_path:str,mode:str = "a")`
+
+writes dumpFile class to a data file format
+
+mode = overwrite("w") or append("a") **default append [str]
+
+**this will only save the positions in data fromatting
+**primary use to write a initiallization data file for a lammps
+```
+# LAMMPS data file written by LammpsFileManipulation.py
+275184 atoms
+2 atom types
+0.4892064609 119.789657019 xlo xhi
+-158.7268972078 158.7268972078 ylo yhi
+0.4917072972 119.7871561826 zlo zhi
+
+Atoms  # atomic
+
+1 2 2.59911 -158.671 2.89486
+.
+.
+.
+```
+
+---
+
+# Group dump file operations
+
+## Format
+`dump_files = { id1:dump_class1,id2:dump_class2, ... }`
+The format consists of a dictionary with the id as a key and the dump_class as the element
+
+## Importing
+**Same file with multiple dumps**
+`multiple_timestep_singular_file_dumps(file_path:str,ids:list = ["TimestepDefault"])`
+
+this opens a multi-timestep lammps dump and converts it to a dictionary of
+dumpFile classes with the keys set to the timesteps
+
+ids:list = ["TimestepDefault"]
+ids are set to the dumpclass timestep by default however if there are duplicates
+this will override the timesteps so you can define the ids for the dictionary
+
+**Different files but as a group**
+`batch_import_files(file_paths:list,ids:list = ["TimestepDefault"])`
+
+this opens several lammps dumps and converts it to a dictionary of
+dumpFile classes with the keys set to the timesteps
+
+ids:list = ["TimestepDefault"]
+ids are set to the dumpclass timestep by default however if there are duplicates
+this will override the timesteps so you can define the ids for the dictionary
+
+**Group translation**
+`group_translate(dump_files, translation_operation)`
+
+This takes in a group of dumps in the dictionary format of class and ####translates
+them as a group the same amount###
+
+because of the nature of this operation the values must be found first therefore
+when not using a custom transform the function loops through adding a small
+amount of time to this practice
+
+proper call:
+translated = group_translate(dump_files,quadrent)
+
+dump_files = {id:class,...}
+
+The predefined quadrent operations will make sure one boundry is a 0 0 0
+
+quadrent = x y z
+    0 = centered at 0 0 0
+    1 = + + +
+    2 = + + -
+    3 = + - +
+    4 = + - -
+    5 = - + +
+    6 = - + -
+    7 = - - +
+    8 = - - -
+
+Custom Transform:
+ The value is added to the atoms direction from the list in order [x_shift, y_shift, z_shift]
+
+Author List (name, email):
+Aaron Schwan, schwanaaron@gmail.com

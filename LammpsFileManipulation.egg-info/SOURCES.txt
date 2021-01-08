@@ -1,0 +1,9 @@
+setup.cfg
+setup.py
+LammpsFileManipulation/__init__.py
+LammpsFileManipulation/dump_file_manipulation.py
+LammpsFileManipulation.egg-info/PKG-INFO
+LammpsFileManipulation.egg-info/SOURCES.txt
+LammpsFileManipulation.egg-info/dependency_links.txt
+LammpsFileManipulation.egg-info/requires.txt
+LammpsFileManipulation.egg-info/top_level.txt
