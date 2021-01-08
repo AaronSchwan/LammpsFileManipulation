@@ -5,7 +5,7 @@ from setuptools import setup
 HERE = pathlib.Path(__file__).parent
 
 # The text of the README file
-README = "README.MD"
+README = r"C:\Users\Aaron Schwan\Documents\GitHub\LammpsFileManipulation\README.MD"
 
 with open(README,'r') as fh:
     long_description = fh.read()
@@ -13,7 +13,7 @@ with open(README,'r') as fh:
 setup(
   name = 'LammpsFileManipulation',
   packages = ['LammpsFileManipulation'],
-  version = '0.15',
+  version = '0.16',
   license='MIT',
   description = 'This is a package designed to help streamline the process of preprocessing LAMMPS output files for scientific calculations/manipulations in Python. The class structures are built using pandas DataFrames making it easy to manipulate.',
   long_discription = long_description,
@@ -21,7 +21,7 @@ setup(
   author = 'Aaron Schwan',
   author_email = 'schwanaaron@gmail.com',
   url = 'https://github.com/AaronSchwan/LammpsFileManipulation',
-  download_url = 'https://github.com/AaronSchwan/LammpsFileManipulation/releases/tag/v_0.15-alpha',
+  download_url = 'https://github.com/AaronSchwan/LammpsFileManipulation/releases/tag/v_0.16-alpha',
   keywords = ['LAMMPS','atomistic',"dump file"],
   install_requires=[
           'pandas',
