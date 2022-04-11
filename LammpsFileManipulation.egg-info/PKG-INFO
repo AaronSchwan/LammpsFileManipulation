@@ -18,7 +18,6 @@ Classifier: Programming Language :: Python :: 3.6
 Classifier: Programming Language :: Python :: 3.7
 Classifier: Programming Language :: Python :: 3.8
 Classifier: Programming Language :: Python :: 3.9
-
 Description-Content-Type: text/markdown
 License-File: LICENSE.txt
 
@@ -204,3 +203,5 @@ Custom Transform:
 
 Author List (name, email):
 Aaron Schwan, schwanaaron@gmail.com
+
+
