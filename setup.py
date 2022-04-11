@@ -5,7 +5,7 @@ from setuptools import setup
 HERE = pathlib.Path(__file__).parent
 
 # The text of the README file
-README = "README.MD"
+README = "README.md"
 with open(README,'r') as fh:
     long_description = fh.read()
 
