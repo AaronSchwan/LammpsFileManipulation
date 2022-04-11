@@ -1,3 +1,6 @@
+.gitignore
+LICENSE.txt
+README.MD
 setup.cfg
 setup.py
 LammpsFileManipulation/__init__.py
