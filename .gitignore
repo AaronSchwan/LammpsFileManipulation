@@ -1,6 +1,4 @@
 .tar.gz
-
 *.gz
 MANIFEST
 MANIFEST
-dist/LammpsFileManipulation-0.18.3.tar.gz

@@ -12,7 +12,7 @@ with open(README,'r') as fh:
 setup(
   name = 'LammpsFileManipulation',
   packages = ['LammpsFileManipulation'],
-  version = '0.19.1',
+  version = '1.0.1',
   license='MIT',
   description = 'This is a package designed to help streamline the process of preprocessing LAMMPS output files for scientific calculations/manipulations in Python. The class structures are built using pandas DataFrames making it easy to manipulate.',
   long_description = long_description,
@@ -24,9 +24,7 @@ setup(
   keywords = ['LAMMPS','atomistic',"dump file"],
   install_requires=[
           'pandas',
-          'numpy',
-          'gc',
-          'ntpath'],
+          'numpy'],
   classifiers=[
     'Development Status :: 3 - Alpha',
     'Intended Audience :: Developers',
