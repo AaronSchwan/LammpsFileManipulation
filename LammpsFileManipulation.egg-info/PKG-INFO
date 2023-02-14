@@ -1,9 +1,9 @@
 Metadata-Version: 2.1
 Name: LammpsFileManipulation
-Version: 1.0.1
+Version: 1.0.2
 Summary: This is a package designed to help streamline the process of preprocessing LAMMPS output files for scientific calculations/manipulations in Python. The class structures are built using pandas DataFrames making it easy to manipulate.
 Home-page: https://github.com/AaronSchwan/LammpsFileManipulation
-Download-URL: https://github.com/AaronSchwan/LammpsFileManipulation/releases/tag/v_0.17-alpha
+Download-URL: https://github.com/AaronSchwan/LammpsFileManipulation
 Author: Aaron Schwan
 Author-email: schwanaaron@gmail.com
 License: MIT

@@ -1291,6 +1291,3 @@ def bin_count(dump_class:dumpFile,axis,number_of_bins,overlap_proportion = 0.0)-
     else:
         raise Exception("Could not finish bin_count operation")
 
-
-dump_file = dumpFile.lammps_dump(r"D:\Mines REU\Data\CU_GBs\NVT\GMM Batch NEGB 441 NVT\Moments.Tmin.441.0")
-print(dump_file)
